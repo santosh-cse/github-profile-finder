@@ -1,3 +1,4 @@
+const historyContainer = document.querySelector("#history");
 const username = document.querySelector(".username");
 const searchBtn = document.querySelector(".searchBtn");
 const profileCard = document.querySelector("#profileCard");
@@ -27,8 +28,20 @@ username.addEventListener("keypress", (e) => {
 async function getUser(user) {
 
     profileCard.innerHTML = `
-        <h2 class="text-center text-2xl">Loading...</h2>
-    `;
+<div class="flex flex-col items-center justify-center py-16">
+
+    <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+
+    <p class="mt-6 text-xl text-slate-300">
+        Fetching GitHub Profile...
+    </p>
+
+</div>
+`;
+searchBtn.disabled = true;
+searchBtn.textContent = "searching...";
+searchBtn.classList.add("opacity-50","cursor-not-allowed");
+
 
     repoContainer.innerHTML = "";
 
@@ -83,24 +96,95 @@ async function getUser(user) {
                     <span class="bg-slate-700 px-4 py-2 rounded-full">
                         📦 Repositories : ${data.public_repos}
                     </span>
+                    <span class="bg-slate-700 px-4 py-2 rounded-full">
+                        📅 Joined : ${new Date(data.created_at).toLocaleDateString("en-GB")}
+                    </span>
 
                 </div>
-
+                   <a
+                      href="${data.html_url}"
+                          target="_blank"
+                          class="inline-block mt-6 bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-semibold transition"
+                             >
+                              🔗 View GitHub Profile
+                    </a>
             </div>
 
         </div>
         `;
+        searchBtn.disabled = false;
+        searchBtn.textContent = "Search";
+        searchBtn.classList.remove("opacity-50","cursor-not-allowed");
 
+        saveHistory(user);
         getRepos(user);
 
     } catch (error) {
 
         profileCard.innerHTML = `
-        <h2 class="text-center text-red-500 text-3xl">
+    <div class="flex flex-col items-center justify-center py-16">
+
+        <div class="text-7xl mb-4">😕</div>
+
+        <h2 class="text-3xl font-bold text-red-500">
             User Not Found
         </h2>
-        `;
+
+        <p class="text-slate-400 mt-4 text-center">
+            We couldn't find the GitHub user you're looking for.
+            <br>
+            Please check the username and try again.
+        </p>
+
+    </div>
+    `;
+    searchBtn.disabled = false;
+    searchBtn.textContent = "Search";
+    searchBtn.classList.remove("opacity-50","cursor-not-allowed");
+
+        followers.textContent = "0";
+        following.textContent = "0";
+        repos.textContent = "0";
+        gists.textContent = "0";
+
+        repoContainer.innerHTML = "";
     }
+
+}
+  function saveHistory(user) {
+
+    let users = JSON.parse(localStorage.getItem("history")) || [];
+
+    users = users.filter((item) => item !== user);
+    
+
+    users.unshift(user);
+    users = users.slice(0,5);
+
+    localStorage.setItem("history",JSON.stringify(users));
+
+    console.log(users);
+    showHistory();
+
+}
+  function showHistory() {
+
+    const users = JSON.parse(localStorage.getItem("history")) || [];
+
+    historyContainer.innerHTML = "";
+
+    users.forEach((user) => {
+
+        historyContainer.innerHTML += `
+            <button
+                onclick="searchHistory('${user}')"
+                class="bg-slate-700 hover:bg-blue-600 px-4 py-2 rounded-full transition"
+              >
+                ${user}
+            </button>
+        `;
+
+    });
 
 }
 
@@ -115,7 +199,11 @@ async function getRepos(user) {
     repos.slice(0, 6).forEach((repo) => {
 
         repoContainer.innerHTML += `
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-blue-500 transition">
+<a
+    href="${repo.html_url}"
+    target="_blank"
+    class="block bg-slate-800 border border-slate-700 rounded-2xl p-6 hover:border-blue-500 hover:scale-105 transition duration-300"
+>
 
             <h3 class="text-xl font-semibold">
                 ${repo.name}
@@ -138,7 +226,10 @@ async function getRepos(user) {
             </div>
 
         </div>
+        </a>
         `;
     });
 
 }
+
+showHistory();
